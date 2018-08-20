@@ -78,7 +78,58 @@
 
 ;;;; Monsters
 
-;; TODO
+(def ice-bear "Ice Bear")
+(def roving-bandits "Roving Bandits")
+(def blood-wolves "Blood Wolves")
+(def horse-eater-hawk "Horse Eater Hawk")
+(def giant-of-the-peaks "Giant of the Peaks")
+(def rogue-thief "Rogue Thief")
+(def blanket-of-crows "Blanket of Crows")
+(def hornback-bison "Hornback Bison")
+(def grassy-back-troll "Grassy Back Troll")
+(def thunder-king "Thunder King")
+(def feisty-gremlin "Feisty Gremlin")
+(def glasswing-drake "Glasswing Drake")
+(def reaching-claws "Reaching Claws")
+(def terrible-wurm "Terrible Wurm")
+(def leviathan-serpent "Leviathan Serpent")
+(def gemscale-boa "Gemscale Boa")
+(def ancient-alligator "Ancient Alligator")
+(def land-shark "Land Shark")
+(def abyssal-leech "Abyssal Leech")
+(def dweller-in-the-tides "Dweller in the Tides")
+(def grave-robbers "Grave Robbers")
+(def ghost-lights "Ghost Lights")
+(def vengeful-shade "Vengeful Shade")
+(def nightmare-crab "Nightmare Crab")
+(def the-unnamed "The Unnamed")
+(def minor-imp "Minor Imp")
+(def renegade-warlock "Renegade Warlock")
+(def giant-flame-lizzard "Giant Flame Lizzard")
+(def spark-elemental "Spark Elemental")
+(def volcano-spirit "Volcano Spirit")
+(def monsters #{ice-bear roving-bandits blood-wolves horse-eater-hawk giant-of-the-peaks
+                rogue-thief blanket-of-crows hornback-bison grassy-back-troll thunder-king
+                feisty-gremlin glasswing-drake reaching-claws terrible-wurm leviathan-serpent
+                gemscale-boa ancient-alligator land-shark abyssal-leech dweller-in-the-tides
+                grave-robbers ghost-lights vengeful-shade nightmare-crab the-unnamed
+                minor-imp renegade-warlock giant-flame-lizzard spark-elemental volcano-spirit})
+
+(def monster-types #{:normal :spirit})
+(defn attack-range
+  ([x] (attack-range x x))
+  ([min-hit max-hit] (set (range min-hit (inc max-hit)))))
+
+
+(defn monster? [m] (contains? monsters m))
+
+(s/def :world/monster monster?)
+
+(s/def :monster/level (s/and pos-int?
+                             #(<= % 5)))
+(s/def :monster/type #(contains? monster-types %))
+(s/def :monster/attack-range (s/coll-of pos-int? :distinct true))
+(s/def :monster/hit-range (s/coll-of pos-int? :distinct true))
 
 ;;;; Regions
 
@@ -93,41 +144,96 @@
 
 (defn region? [r] (contains? regions r))
 
+(defn- encounter-for-every-level? [coll]
+  (->> coll
+       (map :monster/level)
+       set
+       (= #{1 2 3 4 5})))
+
 (s/def :world/region region?)
-
-
 (s/def :wilderness/day #(contains? #{:easy-day :hard-day} %))
 (s/def :wilderness/days (s/coll-of :wilderness/day :count 6))
+(s/def :wilderness/encounter (s/keys :req [:world/monster
+                                           :monster/level
+                                           :monster/type
+                                           :monster/attack-range
+                                           :monster/hit-range]))
+(s/def :winderness/encounters (s/and (s/coll-of :wilderness/encounter :count 5 :distinct true)
+                                     encounter-for-every-level?))
 (s/def :wilderness/region (s/keys :req [:world/region
                                         :wilderness/days
                                         :engine/construct
                                         :world/component
-                                        :world/treasure]))
+                                        :world/treasure
+                                        :wilderness/encounters]))
 
 (defn- wilderness-days [& args] (map #(if (= -1 %) :hard-day :easy-day) args))
 
+(defn- wilderness-encounter
+  [monster level monster-type
+   attack-range-min attack-range-max hit-range-min hit-range-max]
+  {:world/monster monster
+   :monster/level level
+   :monster/type monster-type
+   :monster/attack-range (attack-range attack-range-min attack-range-max)
+   :monster/hit-range (attack-range hit-range-min hit-range-max)})
 
-(defn wilderness-region [name construct component treasure days]
+(defn- wilderness-encounters [& args] (map #(apply wilderness-encounter %) args))
+
+
+(defn wilderness-region
+  [name construct component treasure days encounters]
   {:wilderness/region name
    :wilderness/days days
    :engine/construct construct
    :world/component component
-   :world/treasure treasure})
+   :world/treasure treasure
+   :wilderness/encounters encounters})
 
 
 (def the-wilderness (->> [[halebeard-peak seal-of-balance silver ice-plate
-                           (wilderness-days -1 -1 0 -1 0 0)]
+                           (wilderness-days -1 -1 0 -1 0 0)
+                           (wilderness-encounters [ice-bear 1 :normal 1 1 5 6]
+                                                  [roving-bandits 2 :normal 1 1 6 6]
+                                                  [blood-wolves 3 :normal 1 2 6 6]
+                                                  [horse-eater-hawk 4 :normal 1 3 6 6]
+                                                  [giant-of-the-peaks 5 :normal 1 4 6 6])]
                           [the-great-wilds hermetic-mirror quartz bracelet-of-ios
-                           (wilderness-days -1 0 0 -1 0 0)]
+                           (wilderness-days -1 0 0 -1 0 0)
+                           (wilderness-encounters [rogue-thief 1 :normal 1 2 5 6]
+                                                  [blanket-of-crows 2 :normal 1 1 6 6]
+                                                  [hornback-bison 3 :normal 1 1 6 6]
+                                                  [grassy-back-troll 4 :normal 1 3 5 6]
+                                                  [thunder-king 5 :spirit 1 4 6 6])]
                           [root-strangled-marshes void-gate gum shimmering-moonlace
-                           (wilderness-days -1 0 -1 0 -1 0)]
+                           (wilderness-days -1 0 -1 0 -1 0)
+                           (wilderness-encounters [feisty-gremlin 1 :normal 1 1 5 6]
+                                                  [glasswing-drake 2 :normal 1 1 6 6]
+                                                  [reaching-claws 3 :spirit 1 2 6 6]
+                                                  [terrible-wurm 4 :normal 1 3 6 6]
+                                                  [leviathan-serpent 5 :normal 1 4 6 6])]
                           [glassrock-canyon golden-chassis silica scale-of-the-infinity-wurm
-                           (wilderness-days -1 0 -1 0 -1 0)]
+                           (wilderness-days -1 0 -1 0 -1 0)
+                           (wilderness-encounters [gemscale-boa 1 :normal 1 1 5 6]
+                                                  [ancient-alligator 2 :normal 1 2 6 6]
+                                                  [land-shark 3 :normal 1 2 6 6]
+                                                  [abyssal-leech 4 :normal 1 3 6 6]
+                                                  [dweller-in-the-tides 5 :normal 1 4 6 6])]
                           [ruined-city-of-the-ancients scrying-lens wax the-ancient-record
-                           (wilderness-days -1 0 0 -1 0 0)]
+                           (wilderness-days -1 0 0 -1 0 0)
+                           (wilderness-encounters [grave-robbers 1 :normal 1 1 5 6]
+                                                  [ghost-lights 2 :spirit 1 1 6 6]
+                                                  [vengeful-shade 3 :spirit 1 2 6 6]
+                                                  [nightmare-crab 4 :normal 1 3 6 6]
+                                                  [the-unnamed 5 :spirit 1 4 6 6])]
                           [the-fiery-maw crystal-battery lead the-molten-shard
-                           (wilderness-days -1 -1 0 -1 0 0)]]
-                         (map #(apply region %))))
+                           (wilderness-days -1 -1 0 -1 0 0)
+                           (wilderness-encounters [minor-imp 1 :normal 1 1 5 6]
+                                                  [renegade-warlock 2 :normal 1 2 5 6]
+                                                  [giant-flame-lizzard 3 :normal 1 3 5 6]
+                                                  [spark-elemental 4 :spirit 1 3 6 6]
+                                                  [volcano-spirit 5 :spirit 1 4 6 6])]]
+                         (map #(apply wilderness-region %))))
 
 
 ;;;; Link
