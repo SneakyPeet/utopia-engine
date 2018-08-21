@@ -123,7 +123,7 @@
 (def the-great-wilds "The Great Wilds")
 (def root-strangled-marshes "Root Strangled Marshes")
 (def glassrock-canyon "Glassrock Canyon")
-(def ruined-city-of-the-ancients " Ruined City of the Ancients")
+(def ruined-city-of-the-ancients "Ruined City of the Ancients")
 (def the-fiery-maw "The Fiery Maw")
 (def regions #{halebeard-peak the-great-wilds root-strangled-marshes glassrock-canyon
                ruined-city-of-the-ancients the-fiery-maw })

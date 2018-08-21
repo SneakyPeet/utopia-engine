@@ -38,3 +38,17 @@ The game-data map contains 3 fields
 * `:possible-actions` as described above
 * `:universe` representing info about the utopia engine universe. This data never changes
 * `:game-state` the state of the game that gets updated when actions are executed
+
+
+### Example
+
+The simplest (and a very naive) execution of the game might look like this
+
+```
+(let [state-0   new-game
+      execute-1 (-> state-0 :possible-actions first :execute)
+      state-1   (execute-1)
+      execute-2 (-> state-1 :possible-actions first :execute)
+      state-2   (execute-2)]
+  state-2)
+```

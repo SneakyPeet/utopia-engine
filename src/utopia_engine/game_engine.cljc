@@ -14,9 +14,9 @@
 (s/def :execute/actions (s/coll-of :execute/action))
 
 
-(defn- throw-invalid [spec data]
+(defn- throw-invalid [action-type spec data]
   (when-not (s/valid? spec data)
-    (throw (ex-info (str "Invalid Result for spec " spec)
+    (throw (ex-info (str "Invalid Result for action " action-type " spec " spec)
                     (s/explain-data spec data)))))
 
 
@@ -35,15 +35,17 @@
    :description description
    :execute
    (fn []
-     (let [final-args (into [type game-state] args)
+     (let [final-args (into [type universe game-state] args)
            result (apply execute final-args)
-           _ (throw-invalid :execute/result result)
+           _ (throw-invalid type :execute/result result)
            [new-state & actions] result]
-       (throw-invalid :execute/new-state new-state)
-       (throw-invalid :execute/actions actions)
+       (throw-invalid type :execute/new-state new-state)
+       (throw-invalid type :execute/actions actions)
        (game
-        universe
         (-> game-state
             (merge new-state)
             (assoc :last-action type))
         actions)))})
+
+
+(def no-state-change {})
