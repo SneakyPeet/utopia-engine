@@ -277,7 +277,7 @@
                                    :engine/links
                                    :world/tools]))
 
-(defn universe []
+(def universe
   (let [universe-data
         {:wilderness (->> the-wilderness
                           (map (juxt :world/region identity))
