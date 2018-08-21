@@ -4,7 +4,7 @@
             [utopia-engine.search :as search]))
 
 
-(defn start []
+(def new-game
   (let [initial-state {:last-action :start-game}
         start-action (search/search-action initial-state)]
     (game initial-state [start-action])))
